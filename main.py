@@ -55,6 +55,11 @@ if __name__ == '__main__':
                         required=True,
                         help="The directory of the SVG files to be purified.")
 
+    parser.add_argument('-v', '--validate',
+                        type=bool,
+                        default=True,
+                        help="Whether to validate after purification or not (True or False).")
+
     parser.add_argument('-o', '--overwrite',
                         type=bool,
                         default=False,
@@ -86,4 +91,5 @@ if __name__ == '__main__':
                 f.write(main_svg.toxml())
 
             # Validates and repairs the purified file
-            os.system(f'svgcheck -r -q {purified_file}')
+            if args.validate:
+                os.system(f'svgcheck -r -q {purified_file}')
