@@ -58,12 +58,12 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--validate',
                         type=bool,
                         default=True,
-                        help="Whether to validate after purification or not (True or False).")
+                        help="Whether to validate after purification or not ([Default] True or False).")
 
     parser.add_argument('-o', '--overwrite',
                         type=bool,
                         default=False,
-                        help="Whether to overwrite the original files or not (True or False).")
+                        help="Whether to overwrite the original files or not (True or [Default] False).")
 
     args = parser.parse_args()
 
