@@ -76,20 +76,23 @@ if __name__ == '__main__':
     all_files = [file for file in os.listdir(
         args.directory) if os.path.isfile(os.path.join(args.directory, file))]
 
+    if args.validate:
+        print('Please ignore any errors that may occur during the validation process.')
+
     # Purify all SVG files in the specified directory
     for file in all_files:
         if file.endswith('.svg'):
-            doc = minidom.parse(os.path.join(args.directory, file))
+            purified_file = os.path.join(purified_folder, file)
+
+            # Validates and repairs the purified file
+            if args.validate:
+                os.system(f'svgcheck -r -q {purified_file} -o {purified_file}')
+
+            doc = minidom.parse(purified_file)
             main_svg = doc.getElementsByTagName('svg')[0]
 
             clean_element(main_svg)
             remove_wasted_space(main_svg)
 
-            purified_file = os.path.join(purified_folder, file)
-
             with open(purified_file, 'w') as f:
                 f.write(main_svg.toxml())
-
-            # Validates and repairs the purified file
-            if args.validate:
-                os.system(f'svgcheck -r -q {purified_file} -o {purified_file}')
