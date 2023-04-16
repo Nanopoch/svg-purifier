@@ -92,4 +92,4 @@ if __name__ == '__main__':
 
             # Validates and repairs the purified file
             if args.validate:
-                os.system(f'svgcheck -r -q {purified_file}')
+                os.system(f'svgcheck -r -q {purified_file} -o {purified_file}')
