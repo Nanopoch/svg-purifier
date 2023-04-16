@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    subfolder = 'purified' if args.overwrite else ''
+    subfolder = 'purified' if not args.overwrite else ''
     purified_folder = os.path.join(args.directory, subfolder)
 
     if not os.path.exists(purified_folder):
