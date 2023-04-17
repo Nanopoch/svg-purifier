@@ -50,43 +50,33 @@ if __name__ == '__main__':
                         required=True,
                         help="The directory of the SVG files to be purified.")
 
-    parser.add_argument('-v', '--validate',
-                        type=bool,
-                        default=True,
-                        help="Whether to validate after purification or not ([Default] True or False).")
-
-    parser.add_argument('-o', '--overwrite',
-                        type=bool,
-                        default=False,
-                        help="Whether to overwrite the original files or not (True or [Default] False).")
+    parser.add_argument('-o', '--output',
+                        type=str,
+                        default="purified",
+                        help="Output directory for purified SVG files ([Default] 'purified' folder in the same directory as the SVG directory).")
 
     args = parser.parse_args()
 
-    subfolder = 'purified' if not args.overwrite else ''
-    purified_folder = os.path.join(args.directory, subfolder)
+    all_directories = [x[0] for x in os.walk(args.directory)]
 
-    if not os.path.exists(purified_folder):
-        os.makedirs(purified_folder)
+    for directory in all_directories:
+        all_files = []
 
-    all_files = [file for file in os.listdir(
-        args.directory) if os.path.isfile(os.path.join(args.directory, file))]
+        for (dirpath, dirnames, filenames) in os.walk(directory):
+            for file in filenames:
+                all_files.append(os.path.join(dirpath, file))
 
-    # Purify all SVG files in the specified directory
-    for file in all_files:
-        if file.endswith('.svg'):
-            unpurified_file = os.path.join(args.directory, file)
-            temp_file = os.path.join(args.directory, 'temp.svg')
-            purified_file = os.path.join(purified_folder, file)
+        # Purify all SVG files in the current directory
+        for unpurified_file in all_files:
+            if unpurified_file.endswith('.svg'):
+                doc = minidom.parse(unpurified_file)
+                main_svg = doc.getElementsByTagName('svg')[0]
 
-            doc = minidom.parse(unpurified_file)
-            main_svg = doc.getElementsByTagName('svg')[0]
+                clean_element(main_svg)
 
-            clean_element(main_svg)
+                svg_xml = main_svg.toxml()
 
-            svg_xml = main_svg.toxml()
-
-            # Validates and repairs the purified file
-            if args.validate:
+                # Validates and repairs the purified file
                 scour_options = scour.sanitizeOptions()
                 scour_options.indent_type = 'none'
                 scour_options.no_line_breaks = True
@@ -101,5 +91,10 @@ if __name__ == '__main__':
                 svg_xml = scour.scourString(
                     main_svg.toxml(), options=scour_options)
 
-            with open(purified_file, 'w') as f:
-                f.write(svg_xml)
+                purified_file = os.path.join(args.output, unpurified_file)
+
+                if not os.path.exists(os.path.dirname(purified_file)):
+                    os.makedirs(os.path.dirname(purified_file))
+
+                with open(purified_file, 'w') as f:
+                    f.write(svg_xml)
