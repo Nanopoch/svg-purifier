@@ -82,17 +82,19 @@ if __name__ == '__main__':
     # Purify all SVG files in the specified directory
     for file in all_files:
         if file.endswith('.svg'):
+            unpurified_file = os.path.join(args.directory, file)
             purified_file = os.path.join(purified_folder, file)
 
             # Validates and repairs the purified file
             if args.validate:
-                os.system(f'svgcheck -r -q {purified_file} -o {purified_file}')
+                os.system(
+                    f'svgcheck -r -q {unpurified_file} -o {unpurified_file}')
 
-            doc = minidom.parse(purified_file)
+            doc = minidom.parse(unpurified_file)
             main_svg = doc.getElementsByTagName('svg')[0]
 
             clean_element(main_svg)
             remove_wasted_space(main_svg)
 
-            with open(purified_file, 'w') as f:
+            with open(purified_file, 'x') as f:
                 f.write(main_svg.toxml())
