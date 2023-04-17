@@ -1,6 +1,6 @@
 # svg-purifier
 
-A quick and simple SVG purifier tool written in Python, that also validates itself with [`scour`](https://github.com/scour-project/scour)!
+A quick and simple SVG purifier tool written in Python, that also also uses [`scour`](https://github.com/scour-project/scour) for better cleanup!
 
 ## Getting Started
 
