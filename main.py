@@ -1,21 +1,26 @@
-from xml.dom import minidom
 import os
 import argparse
-
-# Indirect dependencies
-import svgcheck
+from xml.dom import minidom
+from scour import scour
 
 # Create a list of all the standard SVG attributes that exist in the SVG specification.
 valid_attributes = ['d', 'xmlns', 'style', 'x', 'y', 'rx', 'ry', 'height', 'width', 'fill', 'stroke', 'stroke-width', 'viewBox', 'transform', 'stroke-linecap',
                     'stroke-linejoin', 'stroke-miterlimit', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-opacity', 'fill-opacity', 'fill-rule', 'clip-rule', 'cx', 'cy', 'r']
 
 # Create a list of all the standard SVG elements that exist in the SVG specification.
-valid_elements = ['svg', 'path', 'rect', 'g', 'defs', 'linearGradient', 'stop', 'radialGradient', 'clipPath', 'mask', 'filter', 'feGaussianBlur', 'feOffset', 'feBlend', 'feColorMatrix', 'feMerge', 'feMergeNode', 'feComposite', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight',
-                  'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology', 'feConvolveMatrix', 'feImage', 'feComponentTransfer', 'feFuncR', 'feFuncG', 'feFuncB', 'feFuncA', 'feComposite', 'feMerge', 'feMergeNode', 'feOffset', 'feGaussianBlur', 'feColorMatrix', 'feBlend', 'feFlood', 'feTile', 'feTurbulence', 'feDisplacementMap', 'feDiffuseLighting', 'feSpecularLighting', 'feDistantLight', 'fePointLight', 'feSpotLight', 'feMorphology']
+valid_elements = ['svg', 'path', 'rect', 'g']
 
 
 # Removes all non-essential attributes from an element and calls itself recursively on all children if the child is necessary to keep (i.e. is not metadata, comment, etc).
 def clean_element(element: minidom.Element):
+    # Explicitly remove the width and height attributes from the main SVG element
+    if element.tagName == 'svg':
+        if 'width' in element.attributes:
+            element.removeAttribute('width')
+
+        if 'height' in element.attributes:
+            element.removeAttribute('height')
+
     # Remove all attributes that are not necessary
     for attr in list(element.attributes.keys()):
         if attr not in valid_attributes:
@@ -30,16 +35,6 @@ def clean_element(element: minidom.Element):
                 clean_element(child)
         else:
             element.removeChild(child)
-
-
-# Removes all whitespace (newlines included) from an element and calls itself recursively on all children.
-def remove_wasted_space(element: minidom.Element):
-    for child in list(element.childNodes):
-        if child.nodeType == minidom.Node.ELEMENT_NODE:
-            remove_wasted_space(child)
-        elif child.nodeType == minidom.Node.TEXT_NODE:
-            child.data = child.data.replace(
-                ' ', '').replace('\n', '').replace('\t', '')
 
 
 # Entry point
@@ -76,25 +71,35 @@ if __name__ == '__main__':
     all_files = [file for file in os.listdir(
         args.directory) if os.path.isfile(os.path.join(args.directory, file))]
 
-    if args.validate:
-        print('Please ignore any errors that may occur during the validation process.')
-
     # Purify all SVG files in the specified directory
     for file in all_files:
         if file.endswith('.svg'):
             unpurified_file = os.path.join(args.directory, file)
+            temp_file = os.path.join(args.directory, 'temp.svg')
             purified_file = os.path.join(purified_folder, file)
-
-            # Validates and repairs the purified file
-            if args.validate:
-                os.system(
-                    f'svgcheck -r -q {unpurified_file} -o {unpurified_file}')
 
             doc = minidom.parse(unpurified_file)
             main_svg = doc.getElementsByTagName('svg')[0]
 
             clean_element(main_svg)
-            remove_wasted_space(main_svg)
 
-            with open(purified_file, 'x') as f:
-                f.write(main_svg.toxml())
+            svg_xml = main_svg.toxml()
+
+            # Validates and repairs the purified file
+            if args.validate:
+                scour_options = scour.sanitizeOptions()
+                scour_options.indent_type = 'none'
+                scour_options.no_line_breaks = True
+                scour_options.newlines = False
+                scour_options.enable_id_stripping = True
+                scour_options.shorten_ids = True
+                scour_options.strip_xml_prolog = True
+                scour_options.remove_descriptive_elements = True
+                scour_options.strip_comments = True
+                scour_options.enable_viewboxing = True
+
+                svg_xml = scour.scourString(
+                    main_svg.toxml(), options=scour_options)
+
+            with open(purified_file, 'w') as f:
+                f.write(svg_xml)
